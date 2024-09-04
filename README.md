@@ -1,2 +1,2 @@
 # samdb
-Buildign redis from scratch
+Building redis from scratch
