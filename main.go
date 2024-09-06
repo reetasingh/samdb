@@ -12,15 +12,27 @@ func connect(port int) error {
 	if err != nil {
 		return err
 	}
-
 	for {
 		fmt.Println("listening")
 		conn, err := listener.Accept()
 		if err != nil {
 			return nil
 		}
+		for {
+			data := make([]byte, 1024)
+			_, err := conn.Read(data)
+			if err != nil {
+				conn.Close()
+				return err
+			}
+			fmt.Println(string(data))
 
-		fmt.Println(conn.LocalAddr())
+			_, err = conn.Write([]byte("hello client"))
+			if err != nil {
+				conn.Close()
+			}
+		}
+
 	}
 }
 
