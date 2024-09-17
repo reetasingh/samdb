@@ -12,18 +12,23 @@ func connect(port int) error {
 	if err != nil {
 		return err
 	}
+	connections := 0
 	for {
-		fmt.Println("listening")
+
 		conn, err := listener.Accept()
 		if err != nil {
 			return nil
 		}
+		connections = connections + 1
+		fmt.Printf("client connected: %v", conn.RemoteAddr())
+		fmt.Printf("concurrent connections: %d", connections)
+
 		for {
 			data := make([]byte, 1024)
 			_, err := conn.Read(data)
 			if err != nil {
 				conn.Close()
-				return err
+				break
 			}
 			fmt.Println(string(data))
 
@@ -32,7 +37,6 @@ func connect(port int) error {
 				conn.Close()
 			}
 		}
-
 	}
 }
 
