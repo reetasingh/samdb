@@ -1,9 +1,29 @@
-package resp
+package core
 
 import (
 	"fmt"
 	"strconv"
 )
+
+func decode(input []byte) (interface{}, int, error) {
+	if len(input) == 0 {
+		return nil, 0, fmt.Errorf("input cannot be empty")
+	}
+	return decodeOne(input)
+}
+
+func decodeOne(input []byte) (interface{}, int, error) {
+	switch input[0] {
+	case ':':
+		return decodeInt(input)
+	case '+':
+		return decodeSimpleString(input)
+	case '$':
+		return decodeBulkString(input)
+	default:
+		return nil, 0, fmt.Errorf("unrecognized input by decoder")
+	}
+}
 
 func decodeInt(input []byte) (int, int, error) {
 	var value int

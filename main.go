@@ -24,13 +24,12 @@ func connect(port int) error {
 		fmt.Printf("concurrent connections: %d", connections)
 
 		for {
-			data := make([]byte, 1024)
-			_, err := conn.Read(data)
+			cmd, err := core.ReadCmd(conn)
 			if err != nil {
 				conn.Close()
 				break
 			}
-			fmt.Println(string(data))
+			fmt.Println(cmd.Cmd, cmd.Args)
 
 			_, err = conn.Write([]byte("hello client"))
 			if err != nil {
