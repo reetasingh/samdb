@@ -1,3 +1,3 @@
-module github.com/samdb
+module samdb
 
 go 1.23
