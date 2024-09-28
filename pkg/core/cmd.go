@@ -24,13 +24,13 @@ func ReadCmd(conn net.Conn) (*RedisCmd, error) {
 // convertByteArrayToStringArray is helper function
 // the input from the redis cli is always sent as array of string
 func convertByteArrayToStringArray(data []byte) ([]string, error) {
-	tokens, _, err := decode(data)
+	tokens, _, err := Decode(data)
 	if err != nil {
 		return []string{}, err
 	}
 	n := len(data)
 
-	values := tokens.([]interface{})
+	values := tokens.([]any)
 	output := make([]string, n)
 	for i := 0; i < n; i++ {
 		output[i] = values[i].(string)

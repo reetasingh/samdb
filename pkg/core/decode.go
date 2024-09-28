@@ -5,14 +5,14 @@ import (
 	"strconv"
 )
 
-func decode(input []byte) (interface{}, int, error) {
+func Decode(input []byte) (any, int, error) {
 	if len(input) == 0 {
 		return nil, 0, fmt.Errorf("input cannot be empty")
 	}
 	return decodeOne(input)
 }
 
-func decodeOne(input []byte) (interface{}, int, error) {
+func decodeOne(input []byte) (any, int, error) {
 	switch input[0] {
 	case ':':
 		return decodeInt(input)
@@ -20,6 +20,8 @@ func decodeOne(input []byte) (interface{}, int, error) {
 		return decodeSimpleString(input)
 	case '$':
 		return decodeBulkString(input)
+	case '*':
+		return decodeArray(input)
 	default:
 		return nil, 0, fmt.Errorf("unrecognized input by decoder")
 	}
@@ -27,18 +29,15 @@ func decodeOne(input []byte) (interface{}, int, error) {
 
 func decodeInt(input []byte) (int, int, error) {
 	var value int
-	if len(input) <= 3 {
-		return 0, 0, fmt.Errorf("not a valid integer input. length < 3")
-	}
 	if input[0] != ':' {
 		return 0, 0, fmt.Errorf("not a valid integer input. should start with :")
 	}
-	if input[1] != '+' && input[1] != '-' {
-		return 0, 0, fmt.Errorf("not a valid integer input. should start with :")
-	}
-	start := 2
+	// if input[1] != '+' && input[1] != '-' {
+	// 	return 0, 0, fmt.Errorf("not a valid integer input. should start with :")
+	// }
+	start := 1
 	pos := 0
-	for i := 2; i < len(input)-1; i++ {
+	for i := 1; i < len(input)-1; i++ {
 		if input[i] == byte('\r') && input[i+1] == byte('\n') {
 			pos = i + 1
 			break // Break if you only need the first occurrence
@@ -50,11 +49,9 @@ func decodeInt(input []byte) (int, int, error) {
 			}
 		}
 	}
-
 	if pos == 0 {
 		return 0, 0, fmt.Errorf("not a valid integer input")
 	}
-
 	end := pos - 1
 	if start == end {
 		return 0, start, nil
@@ -64,7 +61,7 @@ func decodeInt(input []byte) (int, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	return value, pos - 1, nil
+	return value, pos + 1, nil
 }
 
 // func decodeBoolean(input []byte) (bool, int, error) {
@@ -97,7 +94,7 @@ func decodeSimpleString(input []byte) (string, int, error) {
 	if pos == 2 {
 		return "", 1, nil
 	}
-	return string(input[1 : pos-1]), pos - 1, nil
+	return string(input[1 : pos-1]), pos + 1, nil
 }
 
 func decodeBulkString(input []byte) (string, int, error) {
@@ -130,11 +127,47 @@ func decodeBulkString(input []byte) (string, int, error) {
 
 	stringStart := pos + 1
 	stringEnd := pos + length
-	if stringEnd+2 != len(input)-1 {
-		return "", 0, fmt.Errorf("not a valid bulk string input")
-	}
 	if input[stringEnd+1] != byte('\r') && input[stringEnd+2] != byte('\n') {
 		return "", 0, fmt.Errorf("not a valid bulk string input. should end with CLRF: %w", err)
 	}
-	return string(input[stringStart : stringEnd+1]), stringEnd + 1, nil
+	return string(input[stringStart : stringEnd+1]), stringEnd + 3, nil
+}
+
+func decodeArray(input []byte) ([]any, int, error) {
+	if input[0] != '*' {
+		return nil, 0, fmt.Errorf("not a valid array. does not start with *")
+	}
+	pos := 0
+	for i := 1; i < len(input)-1; i++ {
+		if input[i] == byte('\r') && input[i+1] == byte('\n') {
+			pos = i + 1
+			break // Break if you only need the first occurrence
+		} else {
+			_, err := strconv.Atoi(string(input[i]))
+			if err != nil {
+				return nil, 0, err
+			}
+		}
+	}
+	if pos == 0 {
+		return nil, 0, fmt.Errorf("not a valid array. should have length of array provided")
+	}
+
+	size, err := strconv.Atoi(string(input[1 : pos-1]))
+	if err != nil {
+		return nil, 0, fmt.Errorf("not a valid array. should have length of array provided'%w'", err)
+	}
+
+	start := pos + 1
+	result := make([]any, 0)
+	for i := 1; i <= size; i++ {
+		value, next, err := decodeOne(input[start:])
+		if err != nil {
+			return nil, 0, err
+		}
+		result = append(result, value)
+		start = start + next
+	}
+
+	return result, start, nil
 }
