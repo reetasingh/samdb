@@ -1,8 +1,28 @@
-# samdb
-Building redis from scratch
+# SAMDB
+## Building Redis from Scratch
 
+### Checking for Port Usage
+To check if a server is already using a specific port, run:
 
-# to kill a sever is port already in use
-```netstat -va | grep -i "LISTEN"```
-# To connect a client in mac to the server
-```nc localhost 7379```
+```bash
+netstat -va | grep -i "LISTEN"
+```
+
+### Connecting Redis Client to the Server
+
+To connect the Redis client to the server on port 7380, execute:
+
+```bash
+redis-cli -p 7380
+```
+
+# Milestone 1: Working PING Command
+Test the connection with the PING command:
+```bash
+reeta@Reetas-MacBook-Pro samdb % redis-cli -p 7380
+127.0.0.1:7380> ping
+"PONG"
+127.0.0.1:7380> ping a
+"a"
+127.0.0.1:7380>
+```

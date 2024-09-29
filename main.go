@@ -31,8 +31,12 @@ func connect(port int) error {
 				break
 			}
 			fmt.Println(cmd.Cmd, cmd.Args)
-
-			_, err = conn.Write([]byte("hello client"))
+			result, err := core.ProcessCmd(cmd)
+			if err != nil {
+				fmt.Fprintf(conn, fmt.Sprint(err))
+				conn.Close()
+			}
+			_, err = conn.Write(core.EncodeString(result))
 			if err != nil {
 				conn.Close()
 			}
@@ -41,7 +45,7 @@ func connect(port int) error {
 }
 
 func main() {
-	err := connect(7379)
+	err := connect(7380)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

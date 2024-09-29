@@ -1,6 +1,10 @@
 package core
 
-import "net"
+import (
+	"fmt"
+	"net"
+	"strings"
+)
 
 type RedisCmd struct {
 	Cmd  string
@@ -21,6 +25,26 @@ func ReadCmd(conn net.Conn) (*RedisCmd, error) {
 	return &cmd, nil
 }
 
+func ProcessCmd(cmd *RedisCmd) (string, error) {
+	if cmd == nil {
+		return "", fmt.Errorf("cmd cannot be nil")
+	}
+	switch strings.ToLower(cmd.Cmd) {
+	case "ping":
+		{
+			if len(cmd.Args) == 0 {
+				return "PONG", nil
+			} else if len(cmd.Args) == 1 {
+				return cmd.Args[0], nil
+			} else {
+				return "", fmt.Errorf("wrong number of arguments to PING cmd")
+			}
+		}
+	default:
+		return "hi client", nil
+	}
+}
+
 // convertByteArrayToStringArray is helper function
 // the input from the redis cli is always sent as array of string
 func convertByteArrayToStringArray(data []byte) ([]string, error) {
@@ -28,11 +52,10 @@ func convertByteArrayToStringArray(data []byte) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-	n := len(data)
 
 	values := tokens.([]any)
-	output := make([]string, n)
-	for i := 0; i < n; i++ {
+	output := make([]string, len(values))
+	for i := 0; i < len(values); i++ {
 		output[i] = values[i].(string)
 	}
 	return output, nil
