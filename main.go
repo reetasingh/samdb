@@ -21,7 +21,7 @@ func connect(port int) error {
 			return nil
 		}
 		connections = connections + 1
-		fmt.Printf("client connected: %v", conn.RemoteAddr())
+		fmt.Printf("client connected: %v\n", conn.RemoteAddr())
 		fmt.Printf("concurrent connections: %d", connections)
 
 		for {
@@ -30,11 +30,13 @@ func connect(port int) error {
 				conn.Close()
 				break
 			}
-			fmt.Println(cmd.Cmd, cmd.Args)
+			fmt.Println("Received cmd: ", cmd.Cmd, cmd.Args)
 			result, err := core.ProcessCmd(cmd)
 			if err != nil {
-				fmt.Fprintf(conn, fmt.Sprint(err))
-				conn.Close()
+				_, err = conn.Write(core.EncodeError(err))
+				if err != nil {
+					conn.Close()
+				}
 			}
 			_, err = conn.Write(core.EncodeString(result))
 			if err != nil {
