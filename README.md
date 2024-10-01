@@ -25,5 +25,5 @@ reeta@Reetas-MacBook-Pro samdb % redis-cli -p 7380
 "PONG"
 127.0.0.1:7380> PING hi bye
 (error) wrong number of arguments to PING cmd
-127.0.0.1:7380> 
+127.0.0.1:7380>
 ```
