@@ -1,14 +1,12 @@
-package main
+package server
 
 import (
 	"fmt"
 	"net"
-	"os"
 	"samdb/pkg/core"
-	"samdb/pkg/server"
 )
 
-func connect(port int) error {
+func SyncTCPConnect(port int) error {
 	laddr := net.TCPAddr{Port: port}
 	listener, err := net.ListenTCP("tcp", &laddr)
 	if err != nil {
@@ -44,13 +42,5 @@ func connect(port int) error {
 				conn.Close()
 			}
 		}
-	}
-}
-
-func main() {
-	err := server.AsyncTCPConnect(7380)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
 	}
 }
