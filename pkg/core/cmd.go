@@ -25,6 +25,14 @@ func ReadCmd(conn net.Conn) (*RedisCmd, error) {
 	return &cmd, nil
 }
 
+func ReadAndEval(data []byte) (string, error) {
+	tokens, err := convertByteArrayToStringArray(data)
+	if err != nil {
+		return "", err
+	}
+	return ProcessCmd(&RedisCmd{Cmd: tokens[0], Args: tokens[1:]})
+}
+
 func ProcessCmd(cmd *RedisCmd) (string, error) {
 	if cmd == nil {
 		return "", fmt.Errorf("cmd cannot be nil")
