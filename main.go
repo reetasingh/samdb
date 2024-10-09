@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	err := server.AsyncEpollTCPConnect(7380)
+	err := server.AsyncKqueueTCPConnect(7380)
 	//err := server.SyncTCPConnect(7380)
 	if err != nil {
 		fmt.Println(err)

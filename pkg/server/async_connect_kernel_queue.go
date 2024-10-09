@@ -2,15 +2,18 @@ package server
 
 import (
 	"fmt"
+	"samdb/pkg/core"
 	"syscall"
 )
 
-func AsyncEpollTCPConnect(port int) error {
+func AsyncKqueueTCPConnect(port int) error {
 	// create server Socket
 	serverFd, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, 0)
 	if err != nil {
 		return err
 	}
+	defer syscall.Close(serverFd)
+	syscall.SetNonblock(serverFd, true)
 	// bind server Socket to Port and ipv4
 	ipv4ByteArray := [4]byte{
 		byte(127),
@@ -39,7 +42,7 @@ func AsyncEpollTCPConnect(port int) error {
 		return err
 	}
 
-	//defer kqFD.close()
+	defer syscall.Close(kqFD)
 
 	changes := []syscall.Kevent_t{}
 	// start monitoring serverFD first
@@ -64,25 +67,50 @@ func AsyncEpollTCPConnect(port int) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("outer for loop")
 		for i := 0; i < n; i++ {
+			if events[i].Ident == uint64(serverFd) {
+				// notified about new client connection to the server
 
-			if events[i].Ident != uint64(serverFd) {
-				// existing client connection
-				// ReadAndEval(events[i].Udata)
-				fmt.Println("existing client connection")
-			} else {
-				// new client connection
-				// modiy change list to start monitoring this client
+				connFd, _, err := syscall.Accept(serverFd)
+				if err != nil {
+					return err
+				}
+				// Set connFd to non-blocking
+				syscall.SetNonblock(connFd, true)
 				change := syscall.Kevent_t{}
-				change.Ident = events[i].Ident
+				// start monitoring new client
+				change.Ident = uint64(connFd)
 				change.Filter = syscall.EVFILT_READ
 				change.Flags = syscall.EV_ADD | syscall.EV_ENABLE
 				change.Fflags = 0
 				change.Data = 0
 				change.Udata = nil
+				// modify change list to start monitoring this client
 				changes = append(changes, change)
 				fmt.Println("new client connection")
+
+			} else {
+				// notifed about new data on existing client connection
+				// eg: client fired a new command
+				data := make([]byte, 512)
+				n, err := syscall.Read(int(events[i].Ident), data)
+				if n == 0 {
+					// Client disconnected
+					fmt.Println("client disconnected")
+					syscall.Close(int(events[i].Ident))
+					continue
+				}
+				result, err := core.ReadAndEval(data)
+				if err != nil {
+					_, err = syscall.Write(int(events[i].Ident), core.EncodeError(err))
+					if err != nil {
+						syscall.Close(int(events[i].Ident))
+					}
+				}
+				_, err = syscall.Write(int(events[i].Ident), core.EncodeString(result))
+				if err != nil {
+					syscall.Close(int(events[i].Ident))
+				}
 			}
 		}
 	}
