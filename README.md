@@ -56,3 +56,13 @@ WARNING: Could not fetch server CONFIG
 PING: 137931.03 requests per second, p50=0.143 msec
 reeta@Reetas-MacBook-Pro samdb %
 ```
+
+
+# Milestone 3: working AsyncIO with kerner queue
+
+```bash
+reeta@Reetas-MacBook-Pro samdb % redis-benchmark -p 7380 -q -n 100000 PING
+WARNING: Could not fetch server CONFIG
+PING: 119047.62 requests per second, p50=0.399 msec
+reeta@Reetas-MacBook-Pro samdb %
+```

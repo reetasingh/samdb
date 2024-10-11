@@ -54,7 +54,6 @@ func AsyncKqueueTCPConnect(port int) error {
 	change.Data = 0
 	change.Udata = nil
 	changes = append(changes, change)
-
 	events := make([]syscall.Kevent_t, 1)
 
 	for {
@@ -96,8 +95,8 @@ func AsyncKqueueTCPConnect(port int) error {
 				n, err := syscall.Read(int(events[i].Ident), data)
 				if n == 0 {
 					// Client disconnected
-					fmt.Println("client disconnected")
-					syscall.Close(int(events[i].Ident))
+					//fmt.Println("client disconnected")
+					//syscall.Close(int(events[i].Ident))
 					continue
 				}
 				result, err := core.ReadAndEval(data)
@@ -105,6 +104,7 @@ func AsyncKqueueTCPConnect(port int) error {
 					_, err = syscall.Write(int(events[i].Ident), core.EncodeError(err))
 					if err != nil {
 						syscall.Close(int(events[i].Ident))
+						continue
 					}
 				}
 				_, err = syscall.Write(int(events[i].Ident), core.EncodeString(result))
