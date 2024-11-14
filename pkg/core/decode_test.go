@@ -61,7 +61,7 @@ func Test_decodeInt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := decodeInt(tt.args.input)
+			got, got1, err := DecodeInt(tt.args.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("decodeInt() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -117,7 +117,7 @@ func Test_decodeSimpleString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := decodeSimpleString(tt.args.input)
+			got, got1, err := DecodeSimpleString(tt.args.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("decodeSimpleString() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -162,7 +162,7 @@ func Test_decodeBulkString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := decodeBulkString(tt.args.input)
+			got, got1, err := DecodeBulkString(tt.args.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("decodeBulkString() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -226,7 +226,7 @@ Vivamus a urna nisl. Aenean non purus turpis. Sed id orci sit amet magna malesua
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := decodeOne(tt.args.input)
+			got, got1, err := DecodeOne(tt.args.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("decodeOne() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -282,7 +282,7 @@ func Test_decodeArray(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := decodeArray(tt.args.input)
+			got, got1, err := DecodeArray(tt.args.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("decodeArray() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -9,25 +9,25 @@ func Decode(input []byte) (any, int, error) {
 	if len(input) == 0 {
 		return nil, 0, fmt.Errorf("input cannot be empty")
 	}
-	return decodeOne(input)
+	return DecodeOne(input)
 }
 
-func decodeOne(input []byte) (any, int, error) {
+func DecodeOne(input []byte) (any, int, error) {
 	switch input[0] {
 	case ':':
-		return decodeInt(input)
+		return DecodeInt(input)
 	case '+':
-		return decodeSimpleString(input)
+		return DecodeSimpleString(input)
 	case '$':
-		return decodeBulkString(input)
+		return DecodeBulkString(input)
 	case '*':
-		return decodeArray(input)
+		return DecodeArray(input)
 	default:
 		return nil, 0, fmt.Errorf("unrecognized input by decoder")
 	}
 }
 
-func decodeInt(input []byte) (int, int, error) {
+func DecodeInt(input []byte) (int, int, error) {
 	var value int
 	if input[0] != ':' {
 		return 0, 0, fmt.Errorf("not a valid integer input. should start with :")
@@ -73,7 +73,7 @@ func decodeInt(input []byte) (int, int, error) {
 // // 	return []interface{}, 0, nil
 // // }
 
-func decodeSimpleString(input []byte) (string, int, error) {
+func DecodeSimpleString(input []byte) (string, int, error) {
 	if len(input) < 3 {
 		return "", 0, fmt.Errorf("not a valid string input. length < 3")
 	}
@@ -97,7 +97,7 @@ func decodeSimpleString(input []byte) (string, int, error) {
 	return string(input[1 : pos-1]), pos + 1, nil
 }
 
-func decodeBulkString(input []byte) (string, int, error) {
+func DecodeBulkString(input []byte) (string, int, error) {
 	if len(input) < 6 {
 		return "", 0, fmt.Errorf("not a valid bulk string input. length < 6")
 	}
@@ -133,7 +133,7 @@ func decodeBulkString(input []byte) (string, int, error) {
 	return string(input[stringStart : stringEnd+1]), stringEnd + 3, nil
 }
 
-func decodeArray(input []byte) ([]any, int, error) {
+func DecodeArray(input []byte) ([]any, int, error) {
 	if input[0] != '*' {
 		return nil, 0, fmt.Errorf("not a valid array. does not start with *")
 	}
@@ -161,7 +161,7 @@ func decodeArray(input []byte) ([]any, int, error) {
 	start := pos + 1
 	result := make([]any, 0)
 	for i := 1; i <= size; i++ {
-		value, next, err := decodeOne(input[start:])
+		value, next, err := DecodeOne(input[start:])
 		if err != nil {
 			return nil, 0, err
 		}

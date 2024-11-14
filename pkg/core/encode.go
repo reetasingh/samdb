@@ -2,8 +2,13 @@ package core
 
 import "fmt"
 
-func EncodeString(input string) []byte {
-	value := fmt.Sprintf("$%d\r\n%s\r\n", len(input), input)
+func EncodeString(input string, bulk bool) []byte {
+	var value string
+	if bulk {
+		value = fmt.Sprintf("$%d\r\n%s\r\n", len(input), input)
+	} else {
+		value = fmt.Sprintf("+%s\r\n", input)
+	}
 	return []byte(value)
 }
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"samdb/pkg/cmd"
 	"samdb/pkg/core"
 	"syscall"
 )
@@ -99,7 +100,7 @@ func AsyncKqueueTCPConnect(port int) error {
 					//syscall.Close(int(events[i].Ident))
 					continue
 				}
-				result, err := core.ReadAndEval(data)
+				result, err := cmd.ReadAndEval(data)
 				if err != nil {
 					_, err = syscall.Write(int(events[i].Ident), core.EncodeError(err))
 					if err != nil {
@@ -107,7 +108,7 @@ func AsyncKqueueTCPConnect(port int) error {
 						continue
 					}
 				}
-				_, err = syscall.Write(int(events[i].Ident), core.EncodeString(result))
+				_, err = syscall.Write(int(events[i].Ident), result)
 				if err != nil {
 					syscall.Close(int(events[i].Ident))
 				}
