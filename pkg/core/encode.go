@@ -9,6 +9,7 @@ func EncodeString(input string, bulk bool) []byte {
 	} else {
 		value = fmt.Sprintf("+%s\r\n", input)
 	}
+
 	return []byte(value)
 }
 

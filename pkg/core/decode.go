@@ -99,7 +99,7 @@ func DecodeSimpleString(input []byte) (string, int, error) {
 
 func DecodeBulkString(input []byte) (string, int, error) {
 	if len(input) < 6 {
-		return "", 0, fmt.Errorf("not a valid bulk string input. length < 6")
+		return "", 0, fmt.Errorf("not a valid bulk string input. length < 6, %s", string(input))
 	}
 	if input[0] != '$' {
 		return "", 0, fmt.Errorf("not a valid bulk string input. should start with $")

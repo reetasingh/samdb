@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"samdb/pkg/core"
+	"samdb/pkg/store"
 	"strings"
 )
 
@@ -10,8 +11,6 @@ type RedisCmd struct {
 	Cmd  string
 	Args []string
 }
-
-var dataMap map[string]any
 
 // func ReadCmd(conn net.Conn) (*RedisCmd, error) {
 // 	data := make([]byte, 1024)
@@ -27,15 +26,15 @@ var dataMap map[string]any
 // 	return &cmd, nil
 // }
 
-func ReadAndEval(data []byte) ([]byte, error) {
+func ReadAndEval(data []byte, store *store.Store) ([]byte, error) {
 	tokens, err := convertByteArrayToStringArray(data)
 	if err != nil {
 		return []byte{}, err
 	}
-	return ProcessCmd(&RedisCmd{Cmd: tokens[0], Args: tokens[1:]})
+	return ProcessCmd(&RedisCmd{Cmd: tokens[0], Args: tokens[1:]}, store)
 }
 
-func ProcessCmd(cmd *RedisCmd) ([]byte, error) {
+func ProcessCmd(cmd *RedisCmd, store *store.Store) ([]byte, error) {
 	if cmd == nil {
 		return []byte{}, fmt.Errorf("cmd cannot be nil")
 	}
@@ -46,11 +45,11 @@ func ProcessCmd(cmd *RedisCmd) ([]byte, error) {
 		}
 	case "get":
 		{
-			return evalGet(cmd)
+			return evalGet(cmd, store)
 		}
 	case "set":
 		{
-			return evalSet(cmd)
+			return evalSet(cmd, store)
 		}
 	// case "ttl":
 	// 	{
@@ -71,28 +70,25 @@ func evalPing(cmd *RedisCmd) ([]byte, error) {
 	}
 }
 
-func evalGet(cmd *RedisCmd) ([]byte, error) {
+func evalGet(cmd *RedisCmd, store *store.Store) ([]byte, error) {
 	if len(cmd.Args) > 1 || len(cmd.Args) < 1 {
 		return []byte{}, fmt.Errorf("wrong number of arguments to GET command")
 	}
-	if val, ok := dataMap[cmd.Args[0]]; !ok {
+	if val, err := store.Get(cmd.Args[0]); err != nil {
 		return []byte("$-1\r\n"), nil
 	} else {
 		return core.EncodeString(val.(string), true), nil
 	}
 }
 
-func evalSet(cmd *RedisCmd) ([]byte, error) {
+func evalSet(cmd *RedisCmd, store *store.Store) ([]byte, error) {
 	n := len(cmd.Args)
 	if n < 2 {
 		return []byte{}, fmt.Errorf("wrong number of arguments to SET command")
 	}
 	key := cmd.Args[0]
-	value, _, err := core.DecodeBulkString([]byte(cmd.Args[1]))
-	if err != nil {
-		return []byte{}, err
-	}
-	dataMap[key] = value
+	value := cmd.Args[1]
+	store.Set(key, value)
 	return core.EncodeString("OK", false), nil
 }
 
