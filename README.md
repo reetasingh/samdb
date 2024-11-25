@@ -66,3 +66,20 @@ WARNING: Could not fetch server CONFIG
 PING: 119047.62 requests per second, p50=0.399 msec
 reeta@Reetas-MacBook-Pro samdb %
 ```
+
+# Milestone 4: GET , SET and TTL
+
+```reeta@Reetas-MacBook-Pro samdb % redis-cli -p 7380
+127.0.0.1:7380> SET db REDIS EX 10
+OK
+127.0.0.1:7380> GET db
+"REDIS"
+127.0.0.1:7380> TTL db
+(integer) 3
+127.0.0.1:7380> TTL db
+(nil)
+127.0.0.1:7380> GET db
+(nil)
+127.0.0.1:7380>
+
+```

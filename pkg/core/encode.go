@@ -13,6 +13,13 @@ func EncodeString(input string, bulk bool) []byte {
 	return []byte(value)
 }
 
+func EncodeInt(input int64) []byte {
+	var value string
+	value = fmt.Sprintf(":%d\r\n", input)
+	fmt.Println(value)
+	return []byte(value)
+}
+
 func EncodeError(err error) []byte {
 	value := fmt.Sprintf("-%s\r\n", err.Error())
 	return []byte(value)

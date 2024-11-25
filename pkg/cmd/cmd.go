@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"samdb/pkg/core"
 	"samdb/pkg/store"
+	"strconv"
 	"strings"
 )
 
@@ -51,10 +52,10 @@ func ProcessCmd(cmd *RedisCmd, store *store.Store) ([]byte, error) {
 		{
 			return evalSet(cmd, store)
 		}
-	// case "ttl":
-	// 	{
-	// 		return evalTTL(cmd)
-	// 	}
+	case "ttl":
+		{
+			return evalTTL(cmd, store)
+		}
 	default:
 		return core.EncodeString("hi client", false), nil
 	}
@@ -88,13 +89,34 @@ func evalSet(cmd *RedisCmd, store *store.Store) ([]byte, error) {
 	}
 	key := cmd.Args[0]
 	value := cmd.Args[1]
-	store.Set(key, value)
+	ttlSeconds := int64(-1)
+	var err error
+	for i := 2; i < n; i = i + 1 {
+		if strings.ToLower(cmd.Args[i]) == "ex" {
+			if i+1 == n {
+				return []byte{}, fmt.Errorf("wrong number of arguments to SET command")
+			}
+			ttlSeconds, err = strconv.ParseInt(cmd.Args[i+1], 10, 64)
+			if err != nil {
+				return []byte{}, fmt.Errorf("wrong value for %s", cmd.Args[i+1])
+			}
+		}
+	}
+	store.Set(key, value, ttlSeconds)
 	return core.EncodeString("OK", false), nil
 }
 
-// func evalTTL(cmd *RedisCmd) ([]byte, error) {
-// 	return "", nil
-// }
+func evalTTL(cmd *RedisCmd, store *store.Store) ([]byte, error) {
+	if len(cmd.Args) > 1 || len(cmd.Args) < 1 {
+		return []byte{}, fmt.Errorf("wrong number of arguments to TTL command")
+	}
+	key := cmd.Args[0]
+	if val, err := store.GetTTL(key); err != nil {
+		return []byte("$-1\r\n"), nil
+	} else {
+		return core.EncodeInt(val), nil
+	}
+}
 
 // convertByteArrayToStringArray is helper function
 // the input from the redis cli is always sent as array of string
