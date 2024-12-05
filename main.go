@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	"samdb/pkg/server"
+
+	"github.com/reetasingh/samdb/pkg/server"
 )
 
 func main() {

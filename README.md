@@ -58,7 +58,7 @@ reeta@Reetas-MacBook-Pro samdb %
 ```
 
 
-# Milestone 3: working AsyncIO with kerner queue
+# Milestone 3: working AsyncIO with kernel queue
 
 ```bash
 reeta@Reetas-MacBook-Pro samdb % redis-benchmark -p 7380 -q -n 100000 PING
@@ -81,5 +81,4 @@ OK
 127.0.0.1:7380> GET db
 (nil)
 127.0.0.1:7380>
-
 ```

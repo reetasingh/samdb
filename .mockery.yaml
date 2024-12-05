@@ -1,0 +1,8 @@
+with-expecter: true
+packages:
+    github.com/reetasingh/samdb:
+        # place your package-specific config here
+        config:
+        interfaces:
+            # select the interfaces you want mocked
+            DBStore:

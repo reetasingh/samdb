@@ -32,12 +32,16 @@ func DecodeInt(input []byte) (int, int, error) {
 	if input[0] != ':' {
 		return 0, 0, fmt.Errorf("not a valid integer input. should start with :")
 	}
-	// if input[1] != '+' && input[1] != '-' {
-	// 	return 0, 0, fmt.Errorf("not a valid integer input. should start with :")
-	// }
+	sign := 1
 	start := 1
+	if input[1] == '-' {
+		sign = -1
+		start = 2
+	} else if input[1] == '+' {
+		start = 2
+	}
 	pos := 0
-	for i := 1; i < len(input)-1; i++ {
+	for i := start; i < len(input)-1; i++ {
 		if input[i] == byte('\r') && input[i+1] == byte('\n') {
 			pos = i + 1
 			break // Break if you only need the first occurrence
@@ -61,7 +65,7 @@ func DecodeInt(input []byte) (int, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	return value, pos + 1, nil
+	return value * sign, pos + 1, nil
 }
 
 // func decodeBoolean(input []byte) (bool, int, error) {

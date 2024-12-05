@@ -9,14 +9,11 @@ func EncodeString(input string, bulk bool) []byte {
 	} else {
 		value = fmt.Sprintf("+%s\r\n", input)
 	}
-
 	return []byte(value)
 }
 
 func EncodeInt(input int64) []byte {
-	var value string
-	value = fmt.Sprintf(":%d\r\n", input)
-	fmt.Println(value)
+	value := fmt.Sprintf(":%d\r\n", input)
 	return []byte(value)
 }
 

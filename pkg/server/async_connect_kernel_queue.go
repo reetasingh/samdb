@@ -2,10 +2,13 @@ package server
 
 import (
 	"fmt"
-	"samdb/pkg/cmd"
-	"samdb/pkg/core"
-	"samdb/pkg/store"
 	"syscall"
+
+	"github.com/reetasingh/samdb/pkg/store"
+
+	"github.com/reetasingh/samdb/pkg/core"
+
+	"github.com/reetasingh/samdb/pkg/cmd"
 )
 
 func AsyncKqueueTCPConnect(port int) error {
@@ -37,7 +40,7 @@ func AsyncKqueueTCPConnect(port int) error {
 	}
 
 	fmt.Println("server started listening on: ", port)
-	store := store.NewStore()
+	dbStore := store.NewDBStore()
 
 	// Creates a new kernel event queue and returns a descriptor.
 	kqFD, err := syscall.Kqueue()
@@ -102,7 +105,7 @@ func AsyncKqueueTCPConnect(port int) error {
 					//syscall.Close(int(events[i].Ident))
 					continue
 				}
-				result, err := cmd.ReadAndEval(data, store)
+				result, err := cmd.ReadAndEval(data, dbStore)
 				if err != nil {
 					_, err = syscall.Write(int(events[i].Ident), core.EncodeError(err))
 					if err != nil {
