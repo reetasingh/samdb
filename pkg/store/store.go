@@ -3,6 +3,7 @@ package store
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -23,10 +24,12 @@ type DBStore interface {
 	Delete(key string) bool
 	GetTTL(key string) (int64, error)
 	SetTTL(key string, ttlSeconds int64) bool
+	CleanupExpiredKeys()
 }
 
 type DBStoreImpl struct {
-	dataMap map[string]Data
+	dataMap    map[string]Data
+	randomSeed int
 }
 
 type Data struct {
@@ -34,10 +37,11 @@ type Data struct {
 	ttlSeconds int64
 }
 
-func NewDBStore() *DBStoreImpl {
+func NewDBStore(seed int) *DBStoreImpl {
 	dataMap := make(map[string]Data, 0)
 	store := new(DBStoreImpl)
 	store.dataMap = dataMap
+	store.randomSeed = seed
 	return store
 }
 
@@ -77,10 +81,10 @@ func (s *DBStoreImpl) GetTTL(key string) (int64, error) {
 		return -1, errors.New("not found")
 	} else {
 		if val.ttlSeconds == -1 {
+			// no TTL set
 			return -1, nil
 		}
 		timeDiffSeconds := val.ttlSeconds - time.Now().Unix()
-		fmt.Println(timeDiffSeconds)
 		if timeDiffSeconds > 0 {
 			return timeDiffSeconds, nil
 		} else {
@@ -97,4 +101,45 @@ func (s *DBStoreImpl) SetTTL(key string, ttlSeconds int64) bool {
 		return true
 	}
 	return false
+}
+
+/* Keys are never deleted automatically when their TTL expires;
+they remain in the system unless explicitly removed by the user.
+Periodically, we randomly select 20% of the keys and delete those that are expired.
+This process continues until fewer than 80% of the randomly selected 20% keys are expired.
+This is a best effort cleanup process*/
+func (s *DBStoreImpl) CleanupExpiredKeys() {
+	fmt.Println("cleaning up expired keys")
+	totalCount := len(s.dataMap)
+	// 20 % totalCount
+	randomKeysCount := int(float32(totalCount) * 0.2)
+	fmt.Println(randomKeysCount)
+	threshholdCount := int(float32(randomKeysCount) * 0.8)
+	c := 0
+	allKeys := []string{}
+	// slice of all keys
+	for k := range s.dataMap {
+		allKeys = append(allKeys, k)
+	}
+
+	src := rand.NewSource(time.Now().UnixNano())
+	randomGenerator := rand.New(src)
+	// randomly select 20% of the keys
+	for i := 0; i < randomKeysCount; i++ {
+		randomPos := randomGenerator.Intn(randomKeysCount)
+		k := allKeys[randomPos]
+		fmt.Printf("\nrandomly selected %s", k)
+		_, err := s.GetTTL(k)
+		if errors.Is(err, TTLExpiredErr{}) {
+			s.Delete(k)
+			c = c + 1
+		}
+	}
+	fmt.Printf("\ncleaned up %d keys:", c)
+
+	if c > 0 && c == threshholdCount {
+		// 80% of expired keys from the batch of 20% means there could be more keys which are expired
+		// so we repeat again
+		s.CleanupExpiredKeys()
+	}
 }

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"syscall"
+	"time"
 
 	"github.com/reetasingh/samdb/pkg/store"
 
@@ -40,7 +41,7 @@ func AsyncKqueueTCPConnect(port int) error {
 	}
 
 	fmt.Println("server started listening on: ", port)
-	dbStore := store.NewDBStore()
+	dbStore := store.NewDBStore(time.Now().UTC().Nanosecond())
 
 	// Creates a new kernel event queue and returns a descriptor.
 	kqFD, err := syscall.Kqueue()
@@ -72,6 +73,7 @@ func AsyncKqueueTCPConnect(port int) error {
 		if err != nil {
 			return err
 		}
+		dbStore.CleanupExpiredKeys()
 		for i := 0; i < n; i++ {
 			if events[i].Ident == uint64(serverFd) {
 				// notified about new client connection to the server

@@ -9,6 +9,11 @@ type DBStore struct {
 	mock.Mock
 }
 
+// CleanupExpiredKeys provides a mock function with given fields:
+func (_m *DBStore) CleanupExpiredKeys() {
+	_m.Called()
+}
+
 // Delete provides a mock function with given fields: key
 func (_m *DBStore) Delete(key string) bool {
 	ret := _m.Called(key)
