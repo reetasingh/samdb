@@ -82,3 +82,33 @@ OK
 (nil)
 127.0.0.1:7380>
 ```
+
+# Milestone 4: TTL , EXPIRE and DELETE
+```
+127.0.0.1:7380> SET c d ex 100
+OK
+127.0.0.1:7380> TTL c
+(integer) 98
+127.0.0.1:7380> GET c
+"d"
+127.0.0.1:7380> EXPIRE c 200
+(integer) 1
+127.0.0.1:7380> TTL c
+(integer) 199
+127.0.0.1:7380> GET c
+"d"
+127.0.0.1:7380> DEL c
+(integer) 1
+127.0.0.1:7380> GET c
+(nil)
+127.0.0.1:7380> TTL c
+(nil)
+127.0.0.1:7380>
+```
+
+# Milestone 5: adding unit tests coverage
+```
+Running tool: /usr/local/go/bin/go test -timeout 30s -coverprofile=/var/folders/d2/6_6kg3355wv25vyyhvpbdjxw0000gn/T/vscode-go7V7JcK/go-code-cover github.com/reetasingh/samdb/pkg/cmd
+
+ok  	github.com/reetasingh/samdb/pkg/cmd	0.246s	coverage: 60.0% of statements
+```

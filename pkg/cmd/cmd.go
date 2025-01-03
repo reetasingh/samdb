@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,6 +14,10 @@ import (
 type RedisCmd struct {
 	Cmd  string
 	Args []string
+}
+
+func NILValue() []byte {
+	return []byte("$-1\r\n")
 }
 
 // func ReadCmd(conn net.Conn) (*RedisCmd, error) {
@@ -87,7 +92,11 @@ func evalGet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 	}
 	if val, err := dbStore.Get(cmd.Args[0]); err != nil {
 		// nil
-		return []byte("$-1\r\n"), nil
+		if errors.Is(err, store.KeyNotFound{}) {
+			return []byte("$-1\r\n"), nil
+		}
+		return []byte{}, err
+
 	} else {
 		return core.EncodeString(val.(string), true), nil
 	}
@@ -95,7 +104,7 @@ func evalGet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 
 func evalSet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 	n := len(cmd.Args)
-	if n < 2 {
+	if n < 2 || n > 4 || n == 3 {
 		return []byte{}, fmt.Errorf("wrong number of arguments to SET command")
 	}
 	key := cmd.Args[0]
@@ -104,7 +113,7 @@ func evalSet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 	var err error
 	for i := 2; i < n; i = i + 1 {
 		if strings.ToLower(cmd.Args[i]) == "ex" {
-			if i+1 == n {
+			if i == n-1 {
 				return []byte{}, fmt.Errorf("wrong number of arguments to SET command")
 			}
 			ttlSeconds, err = strconv.ParseInt(cmd.Args[i+1], 10, 64)
@@ -118,7 +127,7 @@ func evalSet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 }
 
 func evalTTL(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
-	if len(cmd.Args) > 1 || len(cmd.Args) < 1 {
+	if len(cmd.Args) > 1 || len(cmd.Args) == 0 {
 		return []byte{}, fmt.Errorf("wrong number of arguments to TTL command")
 	}
 	key := cmd.Args[0]
@@ -131,8 +140,8 @@ func evalTTL(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 }
 
 func evalDelete(cmd *RedisCmd, store store.DBStore) ([]byte, error) {
-	if len(cmd.Args) < 1 {
-		return []byte{}, fmt.Errorf("wrong number of arguments to Delete command")
+	if len(cmd.Args) == 0 {
+		return core.EncodeInt(0), fmt.Errorf("wrong number of arguments to Delete command")
 	}
 	count := int64(0)
 	for _, key := range cmd.Args {
