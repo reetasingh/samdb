@@ -25,11 +25,12 @@ type DBStore interface {
 	GetTTL(key string) (int64, error)
 	SetTTL(key string, ttlSeconds int64) bool
 	CleanupExpiredKeys()
+	GetAll() map[string]any
 }
 
 type DBStoreImpl struct {
-	dataMap    map[string]Data
-	randomSeed int
+	dataMap  map[string]Data
+	keyLimit int
 }
 
 type Data struct {
@@ -37,15 +38,27 @@ type Data struct {
 	ttlSeconds int64
 }
 
-func NewDBStore(seed int) *DBStoreImpl {
+func NewDBStore(keyLimit int) *DBStoreImpl {
 	dataMap := make(map[string]Data, 0)
 	store := new(DBStoreImpl)
 	store.dataMap = dataMap
-	store.randomSeed = seed
+	store.keyLimit = keyLimit
 	return store
 }
 
+// randomly delete 1 element
+func (s *DBStoreImpl) evict() {
+	for k := range s.dataMap {
+		// just delete 1 element
+		s.Delete(k)
+		return
+	}
+}
+
 func (s *DBStoreImpl) Set(key string, value any, ttlSeconds int64) {
+	if len(s.dataMap) >= s.keyLimit {
+		s.evict()
+	}
 	data := Data{value: value}
 	data.ttlSeconds = ttlSeconds
 	if data.ttlSeconds != -1 {
@@ -142,4 +155,13 @@ func (s *DBStoreImpl) CleanupExpiredKeys() {
 		// so we repeat again
 		s.CleanupExpiredKeys()
 	}
+}
+
+func (s *DBStoreImpl) GetAll() map[string]any {
+	result := make(map[string]any, len(s.dataMap))
+	for k, v := range s.dataMap {
+		result[k] = v.value
+	}
+
+	return result
 }

@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"strconv"
 	"strings"
 
@@ -34,12 +36,20 @@ func NILValue() []byte {
 // 	return &cmd, nil
 // }
 
-func ReadAndEval(data []byte, dbStore store.DBStore) ([]byte, error) {
-	tokens, err := convertByteArrayToStringArray(data)
+func ReadAndEvalSingleCmd(data []byte, dbStore store.DBStore) []byte {
+	tokens, err := ReadStringTokens(data)
 	if err != nil {
-		return []byte{}, err
+		return RespondForSingleCmd([]byte{}, err)
 	}
-	return ProcessCmd(&RedisCmd{Cmd: tokens[0], Args: tokens[1:]}, dbStore)
+	result, err := ProcessCmd(&RedisCmd{Cmd: tokens[0], Args: tokens[1:]}, dbStore)
+	return RespondForSingleCmd(result, err)
+}
+
+func RespondForSingleCmd(response []byte, err error) []byte {
+	if err != nil {
+		return core.EncodeError(err)
+	}
+	return response
 }
 
 func ProcessCmd(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
@@ -71,9 +81,39 @@ func ProcessCmd(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 		{
 			return evalExpire(cmd, dbStore)
 		}
+	case "bgrewriteaof":
+		{
+			return evalbgREWRITEAOF(dbStore)
+		}
 	default:
 		return core.EncodeString("hi client", false), nil
 	}
+}
+func dumpKey(fp *os.File, key string, value any) error {
+	cmd := fmt.Sprintf("SET %s %s", key, value)
+	tokens := strings.Split(cmd, " ")
+	content, err := core.EncodeArray(tokens)
+	if err != nil {
+		return err
+	}
+	fp.Write(content)
+	return nil
+}
+
+func evalbgREWRITEAOF(dbStore store.DBStore) ([]byte, error) {
+	file, err := os.OpenFile("samdb.aof", os.O_CREATE|os.O_APPEND, fs.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		return []byte{}, err
+	}
+	all := dbStore.GetAll()
+	for k, v := range all {
+		err := dumpKey(file, k, v)
+		if err != nil {
+			return []byte{}, err
+		}
+	}
+	return core.EncodeString("OK", false), nil
 }
 
 func evalPing(cmd *RedisCmd) ([]byte, error) {
@@ -170,15 +210,26 @@ func evalExpire(cmd *RedisCmd, store store.DBStore) ([]byte, error) {
 	return core.EncodeInt(count), nil
 }
 
-// convertByteArrayToStringArray is helper function
+// ReadTokens is helper function
 // the input from the redis cli is always sent as array of string
-func convertByteArrayToStringArray(data []byte) ([]string, error) {
-	tokens, _, err := core.Decode(data)
+func ReadStringTokens(data []byte) ([]string, error) {
+	// everytime we get byte array from REDIS
+	tokens, err := core.Decode(data)
 	if err != nil {
 		return []string{}, err
 	}
 
-	values := tokens.([]any)
+	return toArrayString(tokens)
+
+	// values := tokens.([]any)
+	// output := make([]string, len(values))
+	// for i := 0; i < len(values); i++ {
+	// 	output[i] = values[i].(string)
+	// }
+	// return output, nil
+}
+
+func toArrayString(values []any) ([]string, error) {
 	output := make([]string, len(values))
 	for i := 0; i < len(values); i++ {
 		output[i] = values[i].(string)

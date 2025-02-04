@@ -5,11 +5,22 @@ import (
 	"strconv"
 )
 
-func Decode(input []byte) (any, int, error) {
+func Decode(input []byte) ([]any, error) {
 	if len(input) == 0 {
-		return nil, 0, fmt.Errorf("input cannot be empty")
+		return nil, fmt.Errorf("input cannot be empty")
 	}
-	return DecodeOne(input)
+	index := 0
+	values := make([]any, 0)
+	for index < len(input) {
+		fmt.Println("inside loop", index)
+		value, delta, err := DecodeOne(input[index:])
+		values = append(values, value)
+		if err != nil {
+			return []any{}, err
+		}
+		index = index + delta
+	}
+	return values, nil
 }
 
 func DecodeOne(input []byte) (any, int, error) {

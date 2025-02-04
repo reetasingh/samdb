@@ -7,8 +7,6 @@ import (
 
 	"github.com/reetasingh/samdb/pkg/store"
 
-	"github.com/reetasingh/samdb/pkg/core"
-
 	"github.com/reetasingh/samdb/pkg/cmd"
 )
 
@@ -73,7 +71,7 @@ func AsyncKqueueTCPConnect(port int) error {
 		if err != nil {
 			return err
 		}
-		dbStore.CleanupExpiredKeys()
+		//dbStore.CleanupExpiredKeys()
 		for i := 0; i < n; i++ {
 			if events[i].Ident == uint64(serverFd) {
 				// notified about new client connection to the server
@@ -107,14 +105,7 @@ func AsyncKqueueTCPConnect(port int) error {
 					//syscall.Close(int(events[i].Ident))
 					continue
 				}
-				result, err := cmd.ReadAndEval(data, dbStore)
-				if err != nil {
-					_, err = syscall.Write(int(events[i].Ident), core.EncodeError(err))
-					if err != nil {
-						syscall.Close(int(events[i].Ident))
-						continue
-					}
-				}
+				result := cmd.ReadAndEvalSingleCmd(data, dbStore)
 				_, err = syscall.Write(int(events[i].Ident), result)
 				if err != nil {
 					syscall.Close(int(events[i].Ident))
@@ -122,5 +113,4 @@ func AsyncKqueueTCPConnect(port int) error {
 			}
 		}
 	}
-
 }

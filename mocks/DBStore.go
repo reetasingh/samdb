@@ -54,6 +54,22 @@ func (_m *DBStore) Get(key string) (interface{}, error) {
 	return r0, r1
 }
 
+// GetAll provides a mock function with given fields:
+func (_m *DBStore) GetAll() map[string]interface{} {
+	ret := _m.Called()
+
+	var r0 map[string]interface{}
+	if rf, ok := ret.Get(0).(func() map[string]interface{}); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]interface{})
+		}
+	}
+
+	return r0
+}
+
 // GetTTL provides a mock function with given fields: key
 func (_m *DBStore) GetTTL(key string) (int64, error) {
 	ret := _m.Called(key)

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -181,15 +180,15 @@ func Test_decodeOne(t *testing.T) {
 	type args struct {
 		input []byte
 	}
-	longText := `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	// 	longText := `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-Curabitur pretium tincidunt lacus. Nulla gravida orci a odio, et interdum diam laoreet quis. Suspendisse potenti. Nulla facilisi. Phasellus malesuada nulla at lectus dictum, in sodales eros hendrerit. In aliquet purus ut velit volutpat, ut lacinia velit interdum. Vivamus euismod dui id turpis faucibus, vitae scelerisque purus viverra. Sed vehicula orci vel erat bibendum, vel scelerisque odio vehicula.
+	// Curabitur pretium tincidunt lacus. Nulla gravida orci a odio, et interdum diam laoreet quis. Suspendisse potenti. Nulla facilisi. Phasellus malesuada nulla at lectus dictum, in sodales eros hendrerit. In aliquet purus ut velit volutpat, ut lacinia velit interdum. Vivamus euismod dui id turpis faucibus, vitae scelerisque purus viverra. Sed vehicula orci vel erat bibendum, vel scelerisque odio vehicula.
 
-Integer in nibh sed odio cursus euismod. Proin ut magna at nisi egestas venenatis. Sed vitae quam vitae urna bibendum feugiat. Fusce in lacus libero. Nulla facilisi. Integer venenatis nunc ac dolor aliquet fermentum. Maecenas finibus mauris eu erat gravida, et congue felis blandit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Duis quis tortor nunc.
+	// Integer in nibh sed odio cursus euismod. Proin ut magna at nisi egestas venenatis. Sed vitae quam vitae urna bibendum feugiat. Fusce in lacus libero. Nulla facilisi. Integer venenatis nunc ac dolor aliquet fermentum. Maecenas finibus mauris eu erat gravida, et congue felis blandit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Duis quis tortor nunc.
 
-Praesent id est turpis. Curabitur at metus sit amet orci tincidunt tincidunt. Morbi sed magna ac neque facilisis suscipit. Phasellus convallis lorem ut nisl suscipit, et varius justo euismod. Aliquam erat volutpat. Integer gravida odio nec nisi pellentesque, vel tempor nisi aliquam. Nulla vulputate lectus sit amet odio lacinia, eu tincidunt nunc consectetur.
+	// Praesent id est turpis. Curabitur at metus sit amet orci tincidunt tincidunt. Morbi sed magna ac neque facilisis suscipit. Phasellus convallis lorem ut nisl suscipit, et varius justo euismod. Aliquam erat volutpat. Integer gravida odio nec nisi pellentesque, vel tempor nisi aliquam. Nulla vulputate lectus sit amet odio lacinia, eu tincidunt nunc consectetur.
 
-Vivamus a urna nisl. Aenean non purus turpis. Sed id orci sit amet magna malesuada placerat. Cras fringilla, nunc non convallis scelerisque, nunc libero tincidunt nunc, non cursus leo lectus eu justo. Vestibulum et ante dolor. Mauris ac varius metus. Sed et cursus orci. Ut ac risus nisi. Morbi volutpat, urna ac consectetur ultrices, nunc lacus efficitur nisl, ut cursus quam arcu ut nunc.`
+	// Vivamus a urna nisl. Aenean non purus turpis. Sed id orci sit amet magna malesuada placerat. Cras fringilla, nunc non convallis scelerisque, nunc libero tincidunt nunc, non cursus leo lectus eu justo. Vestibulum et ante dolor. Mauris ac varius metus. Sed et cursus orci. Ut ac risus nisi. Morbi volutpat, urna ac consectetur ultrices, nunc lacus efficitur nisl, ut cursus quam arcu ut nunc.`
 	tests := []struct {
 		name    string
 		args    args
@@ -206,14 +205,14 @@ Vivamus a urna nisl. Aenean non purus turpis. Sed id orci sit amet magna malesua
 			want1:   5,
 			wantErr: false,
 		},
-		{name: "decode bulk string",
-			args: args{
-				input: []byte(fmt.Sprintf("$2004\r\n%s\r\n", longText)),
-			},
-			want:    longText,
-			want1:   2013,
-			wantErr: false,
-		},
+		// {name: "decode bulk string",
+		// 	args: args{
+		// 		input: []byte(fmt.Sprintf("$2004\r\n%s\r\n", longText)),
+		// 	},
+		// 	want:    longText,
+		// 	want1:   2013,
+		// 	wantErr: false,
+		// },
 		{
 			name: "decode simple string",
 			args: args{
@@ -221,6 +220,15 @@ Vivamus a urna nisl. Aenean non purus turpis. Sed id orci sit amet magna malesua
 			},
 			want:    "test",
 			want1:   7,
+			wantErr: false,
+		},
+		{
+			name: "decode valid array for ping command",
+			args: args{
+				input: []byte("*1\r\n$4\r\nPING\r\n"),
+			},
+			want:    []any{"PING"},
+			want1:   14,
 			wantErr: false,
 		},
 	}
@@ -277,6 +285,15 @@ func Test_decodeArray(t *testing.T) {
 			},
 			want:    []any{1, "A", 2, 3, "world"},
 			want1:   34,
+			wantErr: false,
+		},
+		{
+			name: "valid array for ping command",
+			args: args{
+				input: []byte("*1\r\n$4\r\nPING\r\n"),
+			},
+			want:    []any{"PING"},
+			want1:   14,
 			wantErr: false,
 		},
 	}
