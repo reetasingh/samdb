@@ -14,6 +14,12 @@ func Decode(input []byte) ([]any, error) {
 	for index < len(input) {
 		fmt.Println("inside loop", index)
 		value, delta, err := DecodeOne(input[index:])
+		if err != nil {
+			if err.Error() == "done" {
+				break
+			}
+			return nil, err
+		}
 		values = append(values, value)
 		if err != nil {
 			return []any{}, err
@@ -25,6 +31,8 @@ func Decode(input []byte) ([]any, error) {
 
 func DecodeOne(input []byte) (any, int, error) {
 	switch input[0] {
+	case '\x00':
+		return "", 0, fmt.Errorf("done")
 	case ':':
 		return DecodeInt(input)
 	case '+':

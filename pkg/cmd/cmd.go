@@ -220,19 +220,23 @@ func ReadStringTokens(data []byte) ([]string, error) {
 	}
 
 	return toArrayString(tokens)
-
-	// values := tokens.([]any)
-	// output := make([]string, len(values))
-	// for i := 0; i < len(values); i++ {
-	// 	output[i] = values[i].(string)
-	// }
-	// return output, nil
 }
 
 func toArrayString(values []any) ([]string, error) {
-	output := make([]string, len(values))
+	output := make([]string, 0)
 	for i := 0; i < len(values); i++ {
-		output[i] = values[i].(string)
+		switch values[i].(type) {
+		case []any:
+			multipleString, err := toArrayString(values[i].([]any))
+			if err != nil {
+				return nil, err
+			}
+			output = append(output, multipleString...)
+		case string:
+			output = append(output, values[i].(string))
+		default:
+			return nil, fmt.Errorf("invalid type")
+		}
 	}
 	return output, nil
 }
