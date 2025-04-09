@@ -1,6 +1,4 @@
-Here’s a revised version of your README with improved structure, formatting, and clarity:
 
----
 
 # SAMDB
 
