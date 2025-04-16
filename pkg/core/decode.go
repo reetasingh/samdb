@@ -12,7 +12,6 @@ func Decode(input []byte) ([]any, error) {
 	index := 0
 	values := make([]any, 0)
 	for index < len(input) {
-		fmt.Println("inside loop", index)
 		value, delta, err := DecodeOne(input[index:])
 		if err != nil {
 			if err.Error() == "done" {
@@ -86,15 +85,6 @@ func DecodeInt(input []byte) (int, int, error) {
 	}
 	return value * sign, pos + 1, nil
 }
-
-// func decodeBoolean(input []byte) (bool, int, error) {
-// 	return false, 0, nil
-// }
-
-// // func decodeArrays(input []byte) ([]interface{}, int, error) {
-
-// // 	return []interface{}, 0, nil
-// // }
 
 func DecodeSimpleString(input []byte) (string, int, error) {
 	if len(input) < 3 {
