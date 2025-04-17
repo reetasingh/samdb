@@ -133,8 +133,11 @@ func evalINCR(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 	if keyValue, err := dbStore.Get(cmd.Args[0]); err != nil {
 		// nil
 		if errors.Is(err, store.KeyNotFound{}) {
-			// TODO store in DB for next increment on same key
-			return core.EncodeInt(0), nil
+			err = dbStore.Set(cmd.Args[0], "1", int64(-1))
+			if err != nil {
+				return []byte{}, err
+			}
+			return core.EncodeInt(1), nil
 		}
 		return []byte{}, err
 	} else {
@@ -145,10 +148,15 @@ func evalINCR(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 			if err != nil {
 				return []byte{}, err
 			}
-			return core.EncodeInt(int64(intValue)), nil
+			newIntValue := intValue + 1
+			err = dbStore.Set(cmd.Args[0], fmt.Sprintf("%d", newIntValue), int64(-1))
+			if err != nil {
+				return []byte{}, err
+			}
+			return core.EncodeInt(int64(newIntValue)), nil
 		}
 		// TODO return error since incr only supports integer
-		return core.EncodeString(returnValue.(string), true), nil
+		return nil, fmt.Errorf("not a supported type for incr")
 	}
 }
 

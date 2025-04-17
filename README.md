@@ -144,17 +144,40 @@ OK
 
 ---
 
-### Milestone 6: Adding Unit Tests Coverage
+### Milestone 7: Add usport for type and encoding and Add implemted `incr` command
 
-Run tests with coverage:
-
-```bash
-Running tool: /usr/local/go/bin/go test -timeout 30s -coverprofile=/var/folders/d2/6_6kg3355wv25vyyhvpbdjxw0000gn/T/vscode-go7V7JcK/go-code-cover github.com/reetasingh/samdb/pkg/cmd
-
-ok  	github.com/reetasingh/samdb/pkg/cmd	0.246s	coverage: 60.0% of statements
+```
+reeta@Reetas-MacBook-Pro samdb % redis-cli -p 7380
+127.0.0.1:7380> SET a 10
+OK
+127.0.0.1:7380> GET a
+"10"
+127.0.0.1:7380> incr a
+(integer) 11
+127.0.0.1:7380> incr a
+(integer) 12
+127.0.0.1:7380> incr a
+(integer) 13
+127.0.0.1:7380> GET a
+"13"
+127.0.0.1:7380> SET b good
+OK
+127.0.0.1:7380> GET b
+"good"
+127.0.0.1:7380> incr b
+(error) not a supported type for incr
+127.0.0.1:7380>
+127.0.0.1:7380> incr c
+(integer) 1
+127.0.0.1:7380> incr c
+(integer) 2
+127.0.0.1:7380> GET c
+"2"
+127.0.0.1:7380>
 ```
 
 ---
+
 
 ## Summary of Milestones:
 
@@ -164,5 +187,6 @@ ok  	github.com/reetasingh/samdb/pkg/cmd	0.246s	coverage: 60.0% of statements
 - **Milestone 4**: Implemented `SET`, `GET`, and `TTL` commands.
 - **Milestone 5**: Introduced `TTL`, `EXPIRE`, and `DEL` commands for key expiry management.
 - **Milestone 6**: Added unit test coverage to ensure code quality and stability.
+- **Milestone 7**: Add support for type and encoding and implemented `incr` command
 
 ---
