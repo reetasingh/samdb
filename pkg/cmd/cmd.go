@@ -67,6 +67,10 @@ func ProcessCmd(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 		{
 			return evalbgREWRITEAOF(dbStore)
 		}
+	case "incr":
+		{
+			return evalINCR(cmd, dbStore)
+		}
 	default:
 		return core.EncodeString("hi client", false), nil
 	}

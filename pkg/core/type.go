@@ -1,0 +1,8 @@
+package core
+
+const OBJ_STRING_TYPE = 1
+const OBJ_LIST_TYPE = 2
+
+const OBJ_STRING_ENCODING = 3
+const OBJ_INTEGER_ENCODING = 2
+const OBJ_RAW_ENCODING = 1

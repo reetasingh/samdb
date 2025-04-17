@@ -26,15 +26,16 @@ func evalGet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 	if len(cmd.Args) > 1 || len(cmd.Args) < 1 {
 		return []byte{}, fmt.Errorf("wrong number of arguments to GET command")
 	}
-	if val, err := dbStore.Get(cmd.Args[0]); err != nil {
+	if keyValue, err := dbStore.Get(cmd.Args[0]); err != nil {
 		// nil
 		if errors.Is(err, store.KeyNotFound{}) {
 			return []byte("$-1\r\n"), nil
 		}
 		return []byte{}, err
-
 	} else {
-		return core.EncodeString(val.(string), true), nil
+		returnValue := keyValue.Value
+		// TODO check keyValue.typeEncoding for return and call encode accordingly
+		return core.EncodeString(returnValue.(string), true), nil
 	}
 }
 
@@ -58,7 +59,10 @@ func evalSet(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
 			}
 		}
 	}
-	dbStore.Set(key, value, ttlSeconds)
+	err = dbStore.Set(key, value, ttlSeconds)
+	if err != nil {
+		return []byte{}, err
+	}
 	return core.EncodeString("OK", false), nil
 }
 
@@ -120,6 +124,32 @@ func evalbgREWRITEAOF(dbStore store.DBStore) ([]byte, error) {
 		}
 	}
 	return core.EncodeString("OK", false), nil
+}
+
+func evalINCR(cmd *RedisCmd, dbStore store.DBStore) ([]byte, error) {
+	if len(cmd.Args) > 1 || len(cmd.Args) < 1 {
+		return []byte{}, fmt.Errorf("wrong number of arguments to INCR command")
+	}
+	if keyValue, err := dbStore.Get(cmd.Args[0]); err != nil {
+		// nil
+		if errors.Is(err, store.KeyNotFound{}) {
+			// TODO store in DB for next increment on same key
+			return core.EncodeInt(0), nil
+		}
+		return []byte{}, err
+	} else {
+		returnValue := keyValue.Value
+		encodingValue := keyValue.TypeEncoding & 15
+		if encodingValue == core.OBJ_INTEGER_ENCODING {
+			intValue, err := strconv.Atoi(returnValue.(string))
+			if err != nil {
+				return []byte{}, err
+			}
+			return core.EncodeInt(int64(intValue)), nil
+		}
+		// TODO return error since incr only supports integer
+		return core.EncodeString(returnValue.(string), true), nil
+	}
 }
 
 func dumpKey(fp *os.File, key string, value any) error {

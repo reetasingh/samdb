@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
+
+	"github.com/reetasingh/samdb/pkg/core"
 )
 
 type TTLExpiredErr struct{}
@@ -19,8 +22,8 @@ func (t KeyNotFound) Error() string {
 }
 
 type DBStore interface {
-	Set(key string, value any, ttlSeconds int64)
-	Get(key string) (any, error)
+	Set(key string, value any, ttlSeconds int64) error
+	Get(key string) (*Data, error)
 	Delete(key string) bool
 	GetTTL(key string) (int64, error)
 	SetTTL(key string, ttlSeconds int64) bool
@@ -34,8 +37,11 @@ type DBStoreImpl struct {
 }
 
 type Data struct {
-	value      any
-	ttlSeconds int64
+	Value any
+	// most significant 4 bits for type
+	// least significant 4 bits for encoding
+	TypeEncoding uint8
+	TTLSeconds   int64
 }
 
 func NewDBStore(keyLimit int) *DBStoreImpl {
@@ -55,21 +61,36 @@ func (s *DBStoreImpl) evict() {
 	}
 }
 
-func (s *DBStoreImpl) Set(key string, value any, ttlSeconds int64) {
+func (s *DBStoreImpl) Set(key string, value any, ttlSeconds int64) error {
 	if len(s.dataMap) >= s.keyLimit {
 		s.evict()
 	}
-	data := Data{value: value}
-	data.ttlSeconds = ttlSeconds
-	if data.ttlSeconds != -1 {
-		data.ttlSeconds = time.Now().Unix() + data.ttlSeconds
+	typeEncoding := uint8(core.OBJ_STRING_TYPE)
+	switch value.(type) {
+	case string:
+		typeEncoding = core.OBJ_STRING_TYPE
+		typeEncoding = typeEncoding << 4
+		_, err := strconv.Atoi(value.(string))
+		if err == nil {
+			typeEncoding = typeEncoding | core.OBJ_INTEGER_ENCODING
+		} else {
+			typeEncoding = typeEncoding | core.OBJ_STRING_ENCODING
+		}
+	default:
+		return fmt.Errorf("type not supported")
+	}
+	data := Data{Value: value, TypeEncoding: typeEncoding}
+	data.TTLSeconds = ttlSeconds
+	if data.TTLSeconds != -1 {
+		data.TTLSeconds = time.Now().Unix() + data.TTLSeconds
 	} else {
-		data.ttlSeconds = -1
+		data.TTLSeconds = -1
 	}
 	s.dataMap[key] = data
+	return nil
 }
 
-func (s *DBStoreImpl) Get(key string) (any, error) {
+func (s *DBStoreImpl) Get(key string) (*Data, error) {
 	if val, ok := s.dataMap[key]; !ok {
 		return nil, KeyNotFound{}
 	} else {
@@ -77,7 +98,7 @@ func (s *DBStoreImpl) Get(key string) (any, error) {
 		if errors.Is(err, TTLExpiredErr{}) {
 			return nil, KeyNotFound{}
 		}
-		return val.value, nil
+		return &val, nil
 	}
 }
 
@@ -93,11 +114,11 @@ func (s *DBStoreImpl) GetTTL(key string) (int64, error) {
 	if val, ok := s.dataMap[key]; !ok {
 		return -1, errors.New("not found")
 	} else {
-		if val.ttlSeconds == -1 {
+		if val.TTLSeconds == -1 {
 			// no TTL set
 			return -1, nil
 		}
-		timeDiffSeconds := val.ttlSeconds - time.Now().Unix()
+		timeDiffSeconds := val.TTLSeconds - time.Now().Unix()
 		if timeDiffSeconds > 0 {
 			return timeDiffSeconds, nil
 		} else {
@@ -109,7 +130,7 @@ func (s *DBStoreImpl) GetTTL(key string) (int64, error) {
 func (s *DBStoreImpl) SetTTL(key string, ttlSeconds int64) bool {
 	if data, ok := s.dataMap[key]; ok {
 		newttlSeconds := time.Now().Unix() + ttlSeconds
-		newData := Data{data.value, newttlSeconds}
+		newData := Data{data.Value, data.TypeEncoding, newttlSeconds}
 		s.dataMap[key] = newData
 		return true
 	}
@@ -160,7 +181,7 @@ func (s *DBStoreImpl) CleanupExpiredKeys() {
 func (s *DBStoreImpl) GetAll() map[string]any {
 	result := make(map[string]any, len(s.dataMap))
 	for k, v := range s.dataMap {
-		result[k] = v.value
+		result[k] = v.Value
 	}
 
 	return result
